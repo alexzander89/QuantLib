@@ -8,7 +8,7 @@ version: ci.{build}
 build:
   parallel: true
   project: QuantLib.sln
-  verbosity: normal
+  verbosity: detailed
 
 before_build:
   - COPY .appveyor\Directory.Build.props .
