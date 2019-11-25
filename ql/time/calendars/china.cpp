@@ -115,7 +115,7 @@ namespace QuantLib {
             || (y == 2016 && d >= 1 && d <=2 && m == May)
             || (y == 2017 && d == 1 && m == May)
             || (y == 2018 && ((d == 30 && m == April) || (d == 1 && m == May)))
-            || (y == 2019 && d == 1 && m == May)
+            || (y == 2019 && d >= 1 && d <=3 && m == May)
             // Tuen Ng Festival
             || (y <= 2008 && d == 9 && m == June)
             || (y == 2009 && (d == 28 || d == 29) && m == May)
@@ -154,7 +154,7 @@ namespace QuantLib {
             || (y == 2016 && d >= 3 && d <= 7 && m == October)
             || (y == 2017 && d >= 2 && d <= 6 && m == October)
             || (y == 2018 && d >= 1 && d <= 5 && m == October)
-            || (y == 2019 && ((d == 30 && m == September) || (d >= 1 && d <= 4 && m == October)))
+            || (y == 2019 && d >= 1 && d <= 7 && m == October)
             // 70th anniversary of the victory of anti-Japaneses war
             || (y == 2015 && d >= 3 && d <= 4 && m == September)
             )
@@ -276,6 +276,8 @@ namespace QuantLib {
             // 2019
             Date(2, February, 2019),
             Date(3, February, 2019),
+            Date(28, April, 2019),
+            Date(5, May, 2019),
             Date(29, September, 2019),
             Date(12, October, 2019)
         };
