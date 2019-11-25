@@ -42,22 +42,62 @@ class SviInterpolatedSmileSection : public SmileSection, public LazyObject {
         const Date &optionDate, const Handle<Quote> &forward,
         const std::vector<Rate> &strikes, bool hasFloatingStrikes,
         const Handle<Quote> &atmVolatility,
-        const std::vector<Handle<Quote> > &volHandles, Real a, Real b,
-        Real sigma, Real rho, Real m, bool aIsFixed, bool bIsFixed,
-        bool sigmaIsFixed, bool rhoIsFixed, bool mIsFixed,
+        const std::vector<Handle<Quote> > &volHandles, 
+        Real a = Null<Real>(), Real b = Null<Real>(),
+        Real sigma = Null<Real>(), Real rho = Null<Real>(), 
+        Real m = Null<Real>(), bool aIsFixed = false, 
+        bool bIsFixed = false, bool sigmaIsFixed = false, 
+        bool rhoIsFixed = false, bool mIsFixed = false,
         bool vegaWeighted = true,
         const ext::shared_ptr<EndCriteria> &endCriteria =
             ext::shared_ptr<EndCriteria>(),
         const ext::shared_ptr<OptimizationMethod> &method =
             ext::shared_ptr<OptimizationMethod>(),
         const DayCounter &dc = Actual365Fixed());
+    
+    SviInterpolatedSmileSection(
+        Time optionTime, const Handle<Quote> &forward,
+        const std::vector<Rate> &strikes, bool hasFloatingStrikes,
+        const Handle<Quote> &atmVolatility,
+        const std::vector<Handle<Quote> > &volHandles, 
+        Real a = Null<Real>(), Real b = Null<Real>(),
+        Real sigma = Null<Real>(), Real rho = Null<Real>(), 
+        Real m = Null<Real>(), bool aIsFixed = false, 
+        bool bIsFixed = false, bool sigmaIsFixed = false, 
+        bool rhoIsFixed = false, bool mIsFixed = false,
+        bool vegaWeighted = true,
+        const ext::shared_ptr<EndCriteria> &endCriteria =
+            ext::shared_ptr<EndCriteria>(),
+        const ext::shared_ptr<OptimizationMethod> &method =
+            ext::shared_ptr<OptimizationMethod>(),
+        const DayCounter &dc = Actual365Fixed());
+
     //! no quotes
     SviInterpolatedSmileSection(
         const Date &optionDate, const Rate &forward,
         const std::vector<Rate> &strikes, bool hasFloatingStrikes,
         const Volatility &atmVolatility, const std::vector<Volatility> &vols,
-        Real a, Real b, Real sigma, Real rho, Real m, bool isAFixed,
-        bool isBFixed, bool isSigmaFixed, bool isRhoFixed, bool isMFixed,
+        Real a = Null<Real>(), Real b = Null<Real>(),
+        Real sigma = Null<Real>(), Real rho = Null<Real>(), 
+        Real m = Null<Real>(), bool aIsFixed = false, 
+        bool bIsFixed = false, bool sigmaIsFixed = false, 
+        bool rhoIsFixed = false, bool mIsFixed = false,
+        bool vegaWeighted = true,
+        const ext::shared_ptr<EndCriteria> &endCriteria =
+            ext::shared_ptr<EndCriteria>(),
+        const ext::shared_ptr<OptimizationMethod> &method =
+            ext::shared_ptr<OptimizationMethod>(),
+        const DayCounter &dc = Actual365Fixed());
+
+    SviInterpolatedSmileSection(
+        Time optionTime, const Rate &forward,
+        const std::vector<Rate> &strikes, bool hasFloatingStrikes,
+        const Volatility &atmVolatility, const std::vector<Volatility> &vols,
+        Real a = Null<Real>(), Real b = Null<Real>(),
+        Real sigma = Null<Real>(), Real rho = Null<Real>(), 
+        Real m = Null<Real>(), bool aIsFixed = false, 
+        bool bIsFixed = false, bool sigmaIsFixed = false, 
+        bool rhoIsFixed = false, bool mIsFixed = false,
         bool vegaWeighted = true,
         const ext::shared_ptr<EndCriteria> &endCriteria =
             ext::shared_ptr<EndCriteria>(),
