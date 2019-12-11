@@ -39,7 +39,7 @@ namespace QuantLib {
                     const Handle<YieldTermStructure>& foreignTermStructure,
                     Natural fxFixingDays,
                     const Calendar& advanceCalendar,
-                    const Calendar& adjustCalendar = NullCalendar(), 
+                    const Calendar& adjustCalendar = Calendar(), 
                     const Calendar& fxFixingCalendar = WeekendsOnly(),
                     BusinessDayConvention bdc = Following,
                     const DayCounter& dc = Actual365Fixed());

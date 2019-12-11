@@ -35,6 +35,7 @@ cpp_files = \
     hestonblackvolsurface.cpp \
     localvolsurface.cpp \
     localvoltermstructure.cpp \
+    fxblackvolsurface.cpp \
     svifxblackvolsurface.cpp
 
 if UNITY_BUILD

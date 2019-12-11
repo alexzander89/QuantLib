@@ -70,9 +70,9 @@ SviInterpolatedSmileSection::SviInterpolatedSmileSection(
 }
 
 SviInterpolatedSmileSection::SviInterpolatedSmileSection(
-    const Date &optionDate, const Rate &forward,
+    const Date &optionDate, Rate forward,
     const std::vector<Rate> &strikes, bool hasFloatingStrikes,
-    const Volatility &atmVolatility, const std::vector<Volatility> &volHandles,
+    Volatility atmVolatility, const std::vector<Volatility> &volHandles,
     Real a, Real b, Real sigma, Real rho, Real m, bool isAFixed, bool isBFixed,
     bool isSigmaFixed, bool isRhoFixed, bool isMFixed, bool vegaWeighted,
     const ext::shared_ptr<EndCriteria> &endCriteria,
@@ -95,9 +95,9 @@ SviInterpolatedSmileSection::SviInterpolatedSmileSection(
 }
 
 SviInterpolatedSmileSection::SviInterpolatedSmileSection(
-    Time optionTime, const Rate &forward,
+    Time optionTime, Rate forward,
     const std::vector<Rate> &strikes, bool hasFloatingStrikes,
-    const Volatility &atmVolatility, const std::vector<Volatility> &volHandles,
+    Volatility atmVolatility, const std::vector<Volatility> &volHandles,
     Real a, Real b, Real sigma, Real rho, Real m, bool isAFixed, bool isBFixed,
     bool isSigmaFixed, bool isRhoFixed, bool isMFixed, bool vegaWeighted,
     const ext::shared_ptr<EndCriteria> &endCriteria,

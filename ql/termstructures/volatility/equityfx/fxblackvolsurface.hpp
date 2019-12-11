@@ -52,7 +52,7 @@ namespace QuantLib {
                     const Handle<YieldTermStructure>& foreignTermStructure, 
                     Natural fxSpotDays,
                     const Calendar& advanceCalendar,
-                    const Calendar& adjustCalendar = NullCalendar(),
+                    const Calendar& adjustCalendar = Calendar(),
                     const Calendar& fxFixingCalendar = WeekendsOnly(),
                     BusinessDayConvention bdc = Following,
                     const DayCounter& dc = Actual365Fixed());
@@ -78,7 +78,11 @@ namespace QuantLib {
         //! \name inspectors
         //@{
         std::vector<Date> optionDates() const;
-        //@}
+        std::vector<Period> optionTenors() const;
+        delta_vol_matrix deltaVolMatrix() const;
+        DiscountFactor foreignDiscount(Time t) const;
+        DiscountFactor domesticDiscount(Time t) const;
+        //@}    
         //! \name LazyObject interface
         //@{
         virtual void update();
@@ -102,7 +106,7 @@ namespace QuantLib {
         virtual ext::shared_ptr<SmileSection> smileSectionImpl(
                                                 Time optionTime) const = 0;  
 
-        //! compute strike corresponding to vol quotes at a particular time
+        //! computes strikes corresponding to vol quotes at a particular time
         std::vector<Rate> strikesFromVols(Time t,
                                           std::vector<Volatility> vols,
                                           DeltaVolQuote::DeltaType deltaType,
@@ -115,7 +119,7 @@ namespace QuantLib {
         Size quotesPerSmile_;
         delta_vol_matrix deltaVolMatrix_;
         mutable Matrix volMatrix_;     
-        mutable std::vector<BlackVarianceCurve> volCurves_;
+        mutable std::vector<ext::shared_ptr<BlackVarianceCurve> > volCurves_;
 
       private:
         void initializeDates();
@@ -160,6 +164,26 @@ namespace QuantLib {
     inline std::vector<Date>
     FxBlackVolatilitySurface::optionDates() const {
         return optionDates_;
+    }
+
+    inline std::vector<Period>
+    FxBlackVolatilitySurface::optionTenors() const {
+        return optionTenors_;
+    }
+
+    inline FxBlackVolatilitySurface::delta_vol_matrix
+    FxBlackVolatilitySurface::deltaVolMatrix() const {
+        return deltaVolMatrix_;
+    }
+
+    inline DiscountFactor 
+    FxBlackVolatilitySurface::foreignDiscount(Time t) const{
+        return foreignTermStructure_->discount(t);
+    }
+    
+    inline DiscountFactor 
+    FxBlackVolatilitySurface::domesticDiscount(Time t) const{
+        return domesticTermStructure_->discount(t);
     }
 
     inline ext::shared_ptr<SmileSection>

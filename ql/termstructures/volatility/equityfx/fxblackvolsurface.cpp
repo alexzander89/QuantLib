@@ -22,8 +22,6 @@
 #include <ql/experimental/fx/blackdeltacalculator.hpp>
 #include <ql/utilities/dataformatters.hpp>
 
-//using namespace std;
-
 namespace QuantLib {
 
     FxBlackVolatilitySurface::FxBlackVolatilitySurface(
@@ -69,8 +67,8 @@ namespace QuantLib {
             BlackDeltaCalculator dbc(ot,
                                      deltaType,
                                      fxSpot_->value(),
-                                     domesticTermStructure_->discount(t),
-                                     foreignTermStructure_->discount(t),
+                                     domesticDiscount(t),
+                                     foreignDiscount(t),
                                      std::sqrt(t)*vols[j]);
 
             if(deltas_[j] == Null<Real>())
@@ -82,13 +80,15 @@ namespace QuantLib {
     }
 
     Rate FxBlackVolatilitySurface::fxForward(Time t) const {
-        // This is an approximation; the forward value should 
+        // This is an approximation: the forward value should 
         // technically be computed by discounting from the delivery
         // date corresponding to time t back to the fx spot date. 
-        // Determining this delivery date is problematic though.
-        DiscountFactor dfDom = domesticTermStructure_->discount(t);
-        DiscountFactor dfFor = foreignTermStructure_->discount(t);
+        // Determining this delivery date is problematic though, 
+        // since we cannot easily map from time to dates. 
+        DiscountFactor dfDom = domesticDiscount(t);
+        DiscountFactor dfFor = foreignDiscount(t);
         Real fwd = fxSpot_->value()*dfFor/dfDom;
+        return fwd;
     }
 
     void FxBlackVolatilitySurface::initializeDates() {
@@ -98,12 +98,9 @@ namespace QuantLib {
             else 
                 deltas_[j] = deltaVolMatrix_.front()[j]->delta();
         }
-        if (adjustCalendar_.empty())
-            jointCalendar_ = advanceCalendar_;
-        else
-            jointCalendar_ = JointCalendar(advanceCalendar_,
-                                           adjustCalendar_,
-                                           JoinHolidays);
+        jointCalendar_ = JointCalendar(advanceCalendar_,
+                                       adjustCalendar_,
+                                       JoinHolidays);
         fxSpotDate_ = spotDate(referenceDate());
         for (Size i=0; i<optionTenors_.size(); ++i) {
             optionDates_[i] = optionDateFromTenor(optionTenors_[i]);
@@ -199,12 +196,18 @@ namespace QuantLib {
             for(Size i=0; i<optionDates().size(); i++) {
                 vols.push_back(volMatrix_[i][j]);
             }
-            BlackVarianceCurve volCurve(referenceDate(), 
-                                        optionDates(), 
-                                        vols, 
-                                        dayCounter());
-            volCurve.enableExtrapolation();
-            volCurves_.push_back(volCurve);
+            // We cannot safely copy instances of the BlackVarianceCurve
+            // because it contains an Interpolation instance but uses the 
+            // default copy constructor. We therefore store a vector of  
+            // pointers instead. In C++11, an alternative would have been  
+            // to use move semantics, or to construct the curve vector 
+            // in-place, without copying, using emplace_back.
+            volCurves_.push_back(
+                ext::make_shared<BlackVarianceCurve>(referenceDate(), 
+                                                     optionDates(),
+                                                     vols,
+                                                     dayCounter()));
+            volCurves_[j]->enableExtrapolation();
         }
     }
 

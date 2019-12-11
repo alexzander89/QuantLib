@@ -17,7 +17,7 @@
  FOR A PARTICULAR PURPOSE. See the license for more details.
 */
 
-#include <termstructures/volatility/equityfx/svifxblackvolsurface.hpp>
+#include <ql/termstructures/volatility/equityfx/svifxblackvolsurface.hpp>
 #include <ql/experimental/volatility/sviinterpolatedsmilesection.hpp>
 
 namespace QuantLib {
@@ -41,20 +41,19 @@ namespace QuantLib {
 
     void SviFxBlackVolatilitySurface::convertQuotes() const {
 
-        std::vector<Volatility> vols;
+        std::vector<Volatility> vols(quotesPerSmile_);
         DeltaVolQuote::DeltaType deltaType;
         DeltaVolQuote::AtmType atmType;
         for(Size i=0; i<optionDates().size(); i++) {
 
-            // determine quotation conventions at this tenor
-            vols.clear();
+            // infer quotation conventions at this tenor
             for(Size j=0; j<quotesPerSmile_; j++) {
                 if (deltaVolMatrix_[i][j]->atmType() != DeltaVolQuote::AtmNull) {
                     atmType = deltaVolMatrix_[i][j]->atmType();
                 } else {
                     deltaType = deltaVolMatrix_[i][j]->deltaType();
                 }
-                vols.push_back(deltaVolMatrix_[i][j]->value());
+                vols[j] = deltaVolMatrix_[i][j]->value();
             }
 
             // if necessary, convert to common conventions
@@ -88,11 +87,10 @@ namespace QuantLib {
 
     ext::shared_ptr<SmileSection> 
     SviFxBlackVolatilitySurface::smileSectionImpl(Time t) const {
-
-        // interpolate vols in time
+        // interpolate vols in time (any strike will do)
         std::vector<Volatility> vols;
         for (Size j=0; j < quotesPerSmile_; ++j) { 
-            vols.push_back(volCurves_[j].blackVol(t, 0));
+            vols.push_back(volCurves_[j]->blackVol(t, 0));
         }
         // find strikes at interpolated vols
         std::vector<Rate> strikes = strikesFromVols(

@@ -74,9 +74,9 @@ class SviInterpolatedSmileSection : public SmileSection, public LazyObject {
 
     //! no quotes
     SviInterpolatedSmileSection(
-        const Date &optionDate, const Rate &forward,
+        const Date &optionDate, Rate forward,
         const std::vector<Rate> &strikes, bool hasFloatingStrikes,
-        const Volatility &atmVolatility, const std::vector<Volatility> &vols,
+        Volatility atmVolatility, const std::vector<Volatility> &vols,
         Real a = Null<Real>(), Real b = Null<Real>(),
         Real sigma = Null<Real>(), Real rho = Null<Real>(), 
         Real m = Null<Real>(), bool aIsFixed = false, 
@@ -90,9 +90,9 @@ class SviInterpolatedSmileSection : public SmileSection, public LazyObject {
         const DayCounter &dc = Actual365Fixed());
 
     SviInterpolatedSmileSection(
-        Time optionTime, const Rate &forward,
+        Time optionTime, Rate forward,
         const std::vector<Rate> &strikes, bool hasFloatingStrikes,
-        const Volatility &atmVolatility, const std::vector<Volatility> &vols,
+        Volatility atmVolatility, const std::vector<Volatility> &vols,
         Real a = Null<Real>(), Real b = Null<Real>(),
         Real sigma = Null<Real>(), Real rho = Null<Real>(), 
         Real m = Null<Real>(), bool aIsFixed = false, 
@@ -128,6 +128,8 @@ class SviInterpolatedSmileSection : public SmileSection, public LazyObject {
     Real rmsError() const;
     Real maxError() const;
     EndCriteria::Type endCriteria() const;
+    std::vector<Volatility> inputVols() const;
+    std::vector<Rate> inputStrikes() const;
     //@}
 
   protected:
@@ -203,6 +205,16 @@ inline Real SviInterpolatedSmileSection::maxError() const {
 inline EndCriteria::Type SviInterpolatedSmileSection::endCriteria() const {
     calculate();
     return sviInterpolation_->endCriteria();
+}
+
+inline std::vector<Volatility> SviInterpolatedSmileSection::inputVols() const {
+    calculate();
+    return vols_;
+}
+
+inline std::vector<Rate> SviInterpolatedSmileSection::inputStrikes() const {
+    calculate();
+    return strikes_;
 }
 
 inline Real SviInterpolatedSmileSection::minStrike() const {
