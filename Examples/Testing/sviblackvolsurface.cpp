@@ -144,11 +144,11 @@ int main(int, char* []) {
     Size tSteps = 801;
     Size xSteps = 801;
 
-    ext::shared_ptr<LocalVolSurface> localVolSurface(
-		ext::make_shared<LocalVolSurface>(Handle<BlackVolTermStructure>(sviVolSurface), 
-                                          Handle<YieldTermStructure>(domTS),
-                                          Handle<YieldTermStructure>(forTS), 
-                                          Handle<Quote>(spotFx)));
+    //ext::shared_ptr<LocalVolSurface> localVolSurface(
+	//	ext::make_shared<LocalVolSurface>(Handle<BlackVolTermStructure>(sviVolSurface), 
+    //                                      Handle<YieldTermStructure>(domTS),
+    //                                      Handle<YieldTermStructure>(forTS), 
+    //                                      Handle<Quote>(spotFx)));
 
     //ext::shared_ptr<LocalVolTermStructure> fixLocalVolTS(
     //    ext::make_shared<FixedLocalVolSurfaceAdapter>(localVolSurface, tSteps, xSteps));
