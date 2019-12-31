@@ -27,6 +27,21 @@
 #include <ql/termstructures/volatility/equityfx/fxblackvolsurface.hpp>
 
 namespace QuantLib {
+
+    //! Cache for interpolated smile sections
+    class SmileCache {
+      public:
+        SmileCache(Size maxSize = 10);
+        ext::shared_ptr<SmileSection> fetchSmile(Time t) const;
+        void addSmile(Time t, const ext::shared_ptr<SmileSection>& smile);
+        void clear();
+
+      private:
+        typedef std::map<Time, ext::shared_ptr<SmileSection> > smile_cache;
+        Size maxSize_;
+        smile_cache cache_;
+    };
+
     //! SVI FX Black volatility surface
     //! FX Black volatility surface using SVI interpolation in strike
     class SviFxBlackVolatilitySurface : public FxBlackVolatilitySurface {
@@ -43,6 +58,10 @@ namespace QuantLib {
                     const Calendar& fxFixingCalendar = WeekendsOnly(),
                     BusinessDayConvention bdc = Following,
                     const DayCounter& dc = Actual365Fixed());
+        //! \name LazyObject interface
+        //@{
+        virtual void update();
+        //|
 
     protected:
         //! \name FxBlackVolatilitySurface interface
@@ -54,6 +73,7 @@ namespace QuantLib {
         //@{
         virtual void convertQuotes() const;
         //@}
+        mutable SmileCache smileCache_;
     };
 
 } // namespace QuantLib

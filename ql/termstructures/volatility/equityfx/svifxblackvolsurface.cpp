@@ -22,6 +22,27 @@
 
 namespace QuantLib {
 
+    SmileCache::SmileCache(Size maxSize)
+        : maxSize_(maxSize) {}
+
+    ext::shared_ptr<SmileSection> SmileCache::fetchSmile(Time t) const {
+        smile_cache::const_iterator i = cache_.find(t);
+        if (i != cache_.end())
+            return i->second;
+        else
+            return ext::shared_ptr<SmileSection>();
+    }
+
+    void SmileCache::addSmile(Time t, const ext::shared_ptr<SmileSection>& smile) {
+        if (cache_.size() > maxSize_)
+            cache_.clear();
+        cache_.insert(std::make_pair(t, smile));
+    }
+
+    void SmileCache::clear() {
+        cache_.clear();
+    }
+
     SviFxBlackVolatilitySurface::SviFxBlackVolatilitySurface(
                 const delta_vol_matrix& deltaVolMatrix,
                 const Handle<Quote>& fxSpot, 
@@ -66,7 +87,7 @@ namespace QuantLib {
                                     strikesFromVols(optionTime, vols, 
                                                     deltaType, atmType);                 
                 SviInterpolatedSmileSection smileSection(optionTime, 
-                                                         fxForward(optionTime), 
+                                                         forwardValue(optionTime), 
                                                          currentStrikes, false,
                                                          Null<Volatility>(), vols);
 
@@ -87,6 +108,12 @@ namespace QuantLib {
 
     ext::shared_ptr<SmileSection> 
     SviFxBlackVolatilitySurface::smileSectionImpl(Time t) const {
+        // check for existing smile section in cache--this boosts
+        // performance, as setting up the interpolation can be expensive
+        ext::shared_ptr<SmileSection> smile(smileCache_.fetchSmile(t));
+        if (smile)
+            return smile;
+
         // interpolate vols in time (any strike will do)
         std::vector<Volatility> vols;
         for (Size j=0; j < quotesPerSmile_; ++j) { 
@@ -97,10 +124,18 @@ namespace QuantLib {
                                             t, vols, DeltaVolQuote::Fwd,
                                             DeltaVolQuote::AtmDeltaNeutral);
         // return interpolated SVI smile section
-        Rate fxFwd = fxForward(t);
-        return ext::shared_ptr<SmileSection>(new 
+        Rate fxFwd = forwardValue(t);
+        ext::shared_ptr<SmileSection> p = 
+            ext::shared_ptr<SmileSection>(new 
                         SviInterpolatedSmileSection(t, fxFwd, strikes, false,
                                                     Null<Volatility>(), vols));
+        smileCache_.addSmile(t, p);
+        return p;
+    }
+
+    void SviFxBlackVolatilitySurface::update() {
+        smileCache_.clear();
+        FxBlackVolatilitySurface::update();
     }
 
 } // namespace QuantLib

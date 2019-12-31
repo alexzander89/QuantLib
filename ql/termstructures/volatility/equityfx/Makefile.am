@@ -18,6 +18,7 @@ this_include_HEADERS = \
     localconstantvol.hpp \
     localvolcurve.hpp \
     localvolsurface.hpp \
+    fixedlocalvoladapter.hpp \
     localvoltermstructure.hpp \
     noexceptlocalvolsurface.hpp \
     fxblackvolsurface.hpp \
@@ -34,6 +35,7 @@ cpp_files = \
     gridmodellocalvolsurface.cpp \
     hestonblackvolsurface.cpp \
     localvolsurface.cpp \
+    fixedlocalvoladapter.cpp \
     localvoltermstructure.cpp \
     fxblackvolsurface.cpp \
     svifxblackvolsurface.cpp

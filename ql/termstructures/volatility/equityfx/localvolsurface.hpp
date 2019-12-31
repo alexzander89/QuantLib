@@ -67,6 +67,12 @@ namespace QuantLib {
         //@{
         virtual void accept(AcyclicVisitor&);
         //@}
+        //! accessor functions
+        const Handle<Quote>& underlying() const;
+        const Handle<YieldTermStructure>& dividendYield() const;
+        const Handle<YieldTermStructure>& riskFreeYield() const;
+        //! compute forward value for a particular time
+        Rate forwardValue(Time t) const;
       protected:
         Volatility localVolImpl(Time, Real) const;
       private:
@@ -75,6 +81,21 @@ namespace QuantLib {
         Handle<Quote> underlying_;
     };
 
-}
+    // inline definitions
+    inline const Handle<Quote>& 
+    LocalVolSurface::underlying() const { 
+        return underlying_; 
+    }
 
+    inline const Handle<YieldTermStructure>& 
+    LocalVolSurface::dividendYield() const {
+        return dividendTS_;
+    }
+        
+    inline const Handle<YieldTermStructure>& 
+    LocalVolSurface::riskFreeYield() const {
+        return riskFreeTS_;
+    }
+
+} // namespace QuantLib
 #endif

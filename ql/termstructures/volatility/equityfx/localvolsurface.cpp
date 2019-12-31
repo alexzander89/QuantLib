@@ -83,6 +83,13 @@ namespace QuantLib {
             LocalVolTermStructure::accept(v);
     }
 
+    Rate LocalVolSurface::forwardValue(Time t) const { 
+        DiscountFactor dfRiskFree= riskFreeTS_->discount(t);
+        DiscountFactor dfDividend= dividendTS_->discount(t);
+        Real fwd = underlying_->value()*dfDividend/dfRiskFree;
+        return fwd;
+    }
+
     Volatility LocalVolSurface::localVolImpl(Time t, Real underlyingLevel)
                                                                      const {
 

@@ -32,6 +32,7 @@
 #include <ql/time/calendars/nullcalendar.hpp>
 #include <ql/time/calendars/weekendsonly.hpp>
 #include <ql/math/matrix.hpp>
+#include <map>
 
 namespace QuantLib {
 
@@ -52,7 +53,7 @@ namespace QuantLib {
                     const Handle<YieldTermStructure>& foreignTermStructure, 
                     Natural fxSpotDays,
                     const Calendar& advanceCalendar,
-                    const Calendar& adjustCalendar = Calendar(),
+                    const Calendar& adjustCalendar,
                     const Calendar& fxFixingCalendar = WeekendsOnly(),
                     BusinessDayConvention bdc = Following,
                     const DayCounter& dc = Actual365Fixed());
@@ -73,15 +74,13 @@ namespace QuantLib {
         ext::shared_ptr<SmileSection> smileSection(const Date& optionDate,
                                                    bool extrapolate = false) const;
         //! returns the smile for a given option time
-        ext::shared_ptr<SmileSection> smileSection(Time& optionTime,
+        ext::shared_ptr<SmileSection> smileSection(Time optionTime,
                                                    bool extrapolate = false) const;
         //! \name inspectors
         //@{
         std::vector<Date> optionDates() const;
         std::vector<Period> optionTenors() const;
         delta_vol_matrix deltaVolMatrix() const;
-        DiscountFactor foreignDiscount(Time t) const;
-        DiscountFactor domesticDiscount(Time t) const;
         //@}    
         //! \name LazyObject interface
         //@{
@@ -92,7 +91,8 @@ namespace QuantLib {
         //@{
         virtual void accept(AcyclicVisitor&);
         //@}
-
+        //! compute fx forward for a particular time
+        Rate forwardValue(Time t) const;
       protected:
         //! \name BlackVolTermStructure interface
         //@{
@@ -111,9 +111,6 @@ namespace QuantLib {
                                           std::vector<Volatility> vols,
                                           DeltaVolQuote::DeltaType deltaType,
                                           DeltaVolQuote::AtmType atmType) const;
-
-        //! compute fx forward for a particular time
-        Rate fxForward(Time t) const;
 
         // can any of these be made private?
         Size quotesPerSmile_;
@@ -134,10 +131,11 @@ namespace QuantLib {
         Handle<Quote> fxSpot_;
         std::vector<Period> optionTenors_;
         std::vector<Date> optionDates_;
+        std::vector<Time> optionTimes_;
         Date fxSpotDate_;
         std::vector<Real> deltas_;
-        Handle<YieldTermStructure> domesticTermStructure_;
-        Handle<YieldTermStructure> foreignTermStructure_;
+        Handle<YieldTermStructure> domesticTS_;
+        Handle<YieldTermStructure> foreignTS_;
         Natural fxSpotDays_;
         Calendar advanceCalendar_;
         Calendar adjustCalendar_;
@@ -176,16 +174,6 @@ namespace QuantLib {
         return deltaVolMatrix_;
     }
 
-    inline DiscountFactor 
-    FxBlackVolatilitySurface::foreignDiscount(Time t) const{
-        return foreignTermStructure_->discount(t);
-    }
-    
-    inline DiscountFactor 
-    FxBlackVolatilitySurface::domesticDiscount(Time t) const{
-        return domesticTermStructure_->discount(t);
-    }
-
     inline ext::shared_ptr<SmileSection>
     FxBlackVolatilitySurface::smileSection(const Period& optionTenor,
                                            bool extrapolate) const {
@@ -204,7 +192,7 @@ namespace QuantLib {
     }
 
     inline ext::shared_ptr<SmileSection>
-    FxBlackVolatilitySurface::smileSection(Time& optionTime,
+    FxBlackVolatilitySurface::smileSection(Time optionTime,
                                            bool extrapolate) const {
         checkRange(optionTime, extrapolate);
         calculate();
@@ -213,6 +201,14 @@ namespace QuantLib {
 
     inline Volatility 
     FxBlackVolatilitySurface::blackVolImpl(Time optionTime, Real strike) const {
+        // for small times we extrapolate backwards in flat volatility
+        // at constant moneyness
+        if (optionTime < optionTimes_.front()) {
+            Time t = optionTimes_.front();
+            Rate fwd1 = forwardValue(t);
+            Rate fwd2 = forwardValue(optionTime);
+            return smileSection(t)->volatility(strike*fwd2/fwd1);
+        } else
             return smileSection(optionTime)->volatility(strike);
     }
 

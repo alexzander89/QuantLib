@@ -41,10 +41,10 @@ namespace QuantLib {
         deltaVolMatrix_(deltaVolMatrix), fxSpot_(fxSpot),
         volMatrix_(deltaVolMatrix.size(), quotesPerSmile_, 0), 
         optionTenors_(optionTenors), optionDates_(optionTenors.size()), 
-        deltas_(quotesPerSmile_), domesticTermStructure_(domesticTermStructure), 
-        foreignTermStructure_(foreignTermStructure), fxSpotDays_(fxSpotDays), 
-        advanceCalendar_(advanceCalendar), adjustCalendar_(adjustCalendar), 
-        fxFixingCalendar_(fxFixingCalendar) {
+        optionTimes_(optionTenors.size()), deltas_(quotesPerSmile_), 
+        domesticTS_(domesticTermStructure), foreignTS_(foreignTermStructure), 
+        fxSpotDays_(fxSpotDays), advanceCalendar_(advanceCalendar), 
+        adjustCalendar_(adjustCalendar), fxFixingCalendar_(fxFixingCalendar) {
         
         initializeDates();
         checkInputs();
@@ -67,10 +67,9 @@ namespace QuantLib {
             BlackDeltaCalculator dbc(ot,
                                      deltaType,
                                      fxSpot_->value(),
-                                     domesticDiscount(t),
-                                     foreignDiscount(t),
+                                     domesticTS_->discount(t),
+                                     foreignTS_->discount(t),
                                      std::sqrt(t)*vols[j]);
-
             if(deltas_[j] == Null<Real>())
                 strikes.push_back(dbc.atmStrike(atmType));
             else 
@@ -79,14 +78,14 @@ namespace QuantLib {
         return strikes;
     }
 
-    Rate FxBlackVolatilitySurface::fxForward(Time t) const {
+    Rate FxBlackVolatilitySurface::forwardValue(Time t) const {
         // This is an approximation: the forward value should 
         // technically be computed by discounting from the delivery
         // date corresponding to time t back to the fx spot date. 
         // Determining this delivery date is problematic though, 
         // since we cannot easily map from time to dates. 
-        DiscountFactor dfDom = domesticDiscount(t);
-        DiscountFactor dfFor = foreignDiscount(t);
+        DiscountFactor dfDom = domesticTS_->discount(t);
+        DiscountFactor dfFor = foreignTS_->discount(t);
         Real fwd = fxSpot_->value()*dfFor/dfDom;
         return fwd;
     }
@@ -104,6 +103,7 @@ namespace QuantLib {
         fxSpotDate_ = spotDate(referenceDate());
         for (Size i=0; i<optionTenors_.size(); ++i) {
             optionDates_[i] = optionDateFromTenor(optionTenors_[i]);
+            optionTimes_[i] = timeFromReference(optionDates_[i]);
         }
     }
 
@@ -118,14 +118,14 @@ namespace QuantLib {
                    << deltaVolMatrix_.size() << ")");
         QL_REQUIRE(std::count(deltas_.begin(), deltas_.end(), Null<Real>()) == 1,
                    "smiles must contain a single atm quote");
-        QL_REQUIRE(domesticTermStructure_->referenceDate() == referenceDate(),
+        QL_REQUIRE(domesticTS_->referenceDate() == referenceDate(),
                    "reference date of domestic term structure (" 
-                   << domesticTermStructure_->referenceDate() << 
+                   << domesticTS_->referenceDate() << 
                    ") must match that of volatility term structure ("
                    << referenceDate() << ")");
-        QL_REQUIRE(foreignTermStructure_->referenceDate() == referenceDate(),
+        QL_REQUIRE(foreignTS_->referenceDate() == referenceDate(),
                    "reference date of foreign term structure (" 
-                   << foreignTermStructure_->referenceDate() << 
+                   << foreignTS_->referenceDate() << 
                    ") must match that of volatility term structure ("
                    << referenceDate() << ")"); 
         for(Size i=0; i<optionTenors_.size(); i++) {
@@ -180,9 +180,12 @@ namespace QuantLib {
     }
 
     Date FxBlackVolatilitySurface::optionDateFromTenor(const Period& p) const {
+        BusinessDayConvention bdc = ModifiedFollowing;
+        if (p.units() == Days ||  p.units() == Weeks) {
+            bdc = Following;
+        } 
         Date deliveryDate =  jointCalendar_.advance(fxSpotDate_,
-                                                    p,
-                                                    businessDayConvention());
+                                                    p, bdc, true);
         return fixingDate(deliveryDate);
     }
 
@@ -197,7 +200,7 @@ namespace QuantLib {
                 vols.push_back(volMatrix_[i][j]);
             }
             // We cannot safely copy instances of the BlackVarianceCurve
-            // because it contains an Interpolation instance but uses the 
+            // because it contains an Interpolation instance but uses a 
             // default copy constructor. We therefore store a vector of  
             // pointers instead. In C++11, an alternative would have been  
             // to use move semantics, or to construct the curve vector 
