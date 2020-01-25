@@ -28,16 +28,16 @@ namespace QuantLib {
         Size tGrid, 
         Size xGrid) 
     : LocalVolTermStructure(localVol->businessDayConvention(),
-      localVol->dayCounter()), localVol_(localVol) {
+      localVol->dayCounter()) {
 
         // we use a time grid and mesher consistent with the one used
         // within the LocalVolRNDCalculator
         ext::shared_ptr<LocalVolRNDCalculator> localVolRND(
             ext::make_shared<LocalVolRNDCalculator>(
-                        localVol_->underlying().currentLink(),
-                        localVol_->riskFreeYield().currentLink(),
-                        localVol_->dividendYield().currentLink(),
-                        localVol_, tGrid, xGrid));
+                        localVol->underlying().currentLink(),
+                        localVol->riskFreeYield().currentLink(),
+                        localVol->dividendYield().currentLink(),
+                        localVol, tGrid, xGrid));
         
         ext::shared_ptr<TimeGrid> timeGrid = localVolRND->timeGrid();
         std::vector<Time> expiries(timeGrid->begin()+1, timeGrid->end());
@@ -70,11 +70,11 @@ namespace QuantLib {
             }
         }
         fixedLocalVol_ =  ext::make_shared<FixedLocalVolSurface>(
-                                            localVol_->referenceDate(), 
+                                            localVol->referenceDate(), 
                                             expiries, 
                                             strikes, 
                                             localVolMatrix, 
-                                            localVol_->dayCounter());
+                                            localVol->dayCounter());
     }
 
 } // namespace QuantLib

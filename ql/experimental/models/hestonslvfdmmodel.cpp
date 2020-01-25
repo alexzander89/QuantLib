@@ -508,12 +508,20 @@ namespace QuantLib {
                     leverageFct->setInterpolation(Linear());
                 }
 
-                const Real sLowerBound = std::max(x.front(),
-                    std::exp(localVolRND.invcdf(
-                        params_.leverageFctPropEps, t)));
-                const Real sUpperBound = std::min(x.back(),
-                    std::exp(localVolRND.invcdf(
-                        1.0-params_.leverageFctPropEps, t)));
+                Real sLowerBound = x.front();
+                // try {
+                //     sLowerBound = std::max(x.front(),
+                //         std::exp(localVolRND.invcdf(
+                //             params_.leverageFctPropEps, t)));
+                // } catch (...) {
+                //     sLowerBound = x.front();
+                // }
+
+                // const Real sUpperBound = std::min(x.back(),
+                //     std::exp(localVolRND.invcdf(
+                //         1.0-params_.leverageFctPropEps, t)));
+
+                Real sUpperBound = x.back();
 
                 const Real lowerL = leverageFct->localVol(t, sLowerBound);
                 const Real upperL = leverageFct->localVol(t, sUpperBound);

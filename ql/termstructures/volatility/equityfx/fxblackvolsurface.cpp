@@ -55,21 +55,21 @@ namespace QuantLib {
     }
 
     std::vector<Rate> FxBlackVolatilitySurface::strikesFromVols(
-                                                    Time t,
-                                                    std::vector<Volatility> vols,
-                                                    DeltaVolQuote::DeltaType deltaType,
-                                                    DeltaVolQuote::AtmType atmType) const {
+                                        Time t,
+                                        std::vector<Volatility> vols,
+                                        DeltaVolQuote::DeltaType deltaType,
+                                        DeltaVolQuote::AtmType atmType) const {
         QL_REQUIRE(vols.size() == quotesPerSmile_,
                    "vector of vols must be of length " << quotesPerSmile_);
         std::vector<Rate> strikes;
         for(Size j=0; j<quotesPerSmile_; j++) {
             Option::Type ot = deltas_[j] > 0 ? Option::Call : Option::Put;
-            BlackDeltaCalculator dbc(ot,
-                                     deltaType,
-                                     fxSpot_->value(),
-                                     domesticTS_->discount(t),
-                                     foreignTS_->discount(t),
-                                     std::sqrt(t)*vols[j]);
+            BlackDeltaCalculator dbc(
+                ot, deltaType,
+                fxSpot_->value(),
+                domesticTS_->discount(t),
+                foreignTS_->discount(t),
+                std::sqrt(t)*vols[j]);
             if(deltas_[j] == Null<Real>())
                 strikes.push_back(dbc.atmStrike(atmType));
             else 

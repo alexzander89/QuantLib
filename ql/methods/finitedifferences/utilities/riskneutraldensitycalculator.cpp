@@ -50,7 +50,8 @@ namespace QuantLib {
                 --evaluations;
             }
 
-        QL_REQUIRE(evaluations, "could not calculate interval");
+        QL_REQUIRE(evaluations, "could not calculate interval for (" 
+                   << p << ", " << t << ")");
 
         const ext::function<Real(Real)> cdf
             = ext::bind(&RiskNeutralDensityCalculator::cdf,

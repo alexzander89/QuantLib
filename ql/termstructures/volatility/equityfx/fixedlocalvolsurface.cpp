@@ -138,17 +138,27 @@ namespace QuantLib {
     }
 
     Date FixedLocalVolSurface::maxDate() const {
-        return maxDate_;
+         return maxDate_;
     }
+
     Time FixedLocalVolSurface::maxTime() const {
-        return times_.back();
+         return times_.back();
     }
-    Real FixedLocalVolSurface::minStrike() const {
-        return strikes_.back()->front();
+    
+    Real FixedLocalVolSurface::minStrike() const { 
+         return 0; 
+    } 
+
+    Real FixedLocalVolSurface::maxStrike() const { 
+        return QL_MAX_REAL; 
     }
-    Real FixedLocalVolSurface::maxStrike() const {
-        return strikes_.back()->back();
-    }
+
+    // Real FixedLocalVolSurface::minStrike() const {
+    //     return strikes_.back()->front();
+    // }
+    // Real FixedLocalVolSurface::maxStrike() const {
+    //     return strikes_.back()->back();
+    // }
 
     Volatility FixedLocalVolSurface::localVolImpl(Time t, Real strike) const {
         t = std::min(times_.back(), std::max(t, times_.front()));

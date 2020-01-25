@@ -2303,8 +2303,7 @@ namespace {
                 hestonProcess->s0().currentLink(),
                 hestonProcess->riskFreeRate().currentLink(),
                 hestonProcess->dividendYield().currentLink(),
-                localVol,
-                timeGrid));
+                localVol, timeGrid, 101));
 
         std::vector<ext::shared_ptr<std::vector<Real> > > strikes;
         for (Size i=1; i < timeGrid->size(); ++i) {

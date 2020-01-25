@@ -80,6 +80,7 @@ namespace QuantLib {
         //@{
         std::vector<Date> optionDates() const;
         std::vector<Period> optionTenors() const;
+        std::vector<Time> optionTimes() const;
         delta_vol_matrix deltaVolMatrix() const;
         //@}    
         //! \name LazyObject interface
@@ -167,6 +168,11 @@ namespace QuantLib {
     inline std::vector<Period>
     FxBlackVolatilitySurface::optionTenors() const {
         return optionTenors_;
+    }
+
+    inline std::vector<Times>
+    FxBlackVolatilitySurface::optionTimes() const {
+        return optionTimes_;
     }
 
     inline FxBlackVolatilitySurface::delta_vol_matrix

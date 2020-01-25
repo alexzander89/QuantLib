@@ -43,6 +43,15 @@ namespace QuantLib {
                           BlackCalibrationHelper::CalibrationErrorType errorType
                                     = BlackCalibrationHelper::RelativePriceError);
 
+        HestonModelHelper(const Date& exerciseDate,
+                          const Real s0,
+                          const Real strikePrice,
+                          const Handle<Quote>& volatility,
+                          const Handle<YieldTermStructure>& riskFreeRate,
+                          const Handle<YieldTermStructure>& dividendYield,
+                          BlackCalibrationHelper::CalibrationErrorType errorType
+                                    = BlackCalibrationHelper::RelativePriceError);
+
         HestonModelHelper(const Period& maturity,
                           const Calendar& calendar,
                           const Handle<Quote>& s0,

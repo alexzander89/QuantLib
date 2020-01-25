@@ -48,7 +48,6 @@ namespace QuantLib {
       protected:
         Volatility localVolImpl(Time, Real) const;
       private:
-        ext::shared_ptr<LocalVolSurface> localVol_;
         ext::shared_ptr<FixedLocalVolSurface> fixedLocalVol_;
     };
 
