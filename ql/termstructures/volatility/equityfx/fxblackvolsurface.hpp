@@ -36,6 +36,20 @@
 
 namespace QuantLib {
 
+    //! Cache for interpolated smile sections
+    class SmileCache {
+      public:
+        SmileCache(Size maxSize = 10);
+        ext::shared_ptr<SmileSection> fetchSmile(Time t) const;
+        void addSmile(Time t, const ext::shared_ptr<SmileSection>& smile);
+        void clear();
+
+      private:
+        typedef std::map<Time, ext::shared_ptr<SmileSection> > smile_cache;
+        Size maxSize_;
+        smile_cache cache_;
+    };
+
     //! FX Black volatility surface
     /*! This class is purely abstract and defines the interface of
         the concrete FX volatility surfaces that will be derived
@@ -56,7 +70,8 @@ namespace QuantLib {
                     const Calendar& adjustCalendar,
                     const Calendar& fxFixingCalendar = WeekendsOnly(),
                     BusinessDayConvention bdc = Following,
-                    const DayCounter& dc = Actual365Fixed());
+                    const DayCounter& dc = Actual365Fixed(),
+                    bool cubicTimeInterpolation = false);
         //! \name TermStructure interface
         //@{
         virtual Date maxDate() const;
@@ -82,6 +97,7 @@ namespace QuantLib {
         std::vector<Period> optionTenors() const;
         std::vector<Time> optionTimes() const;
         delta_vol_matrix deltaVolMatrix() const;
+        ext::shared_ptr<BlackVarianceCurve> atmVolCurve() const;
         //@}    
         //! \name LazyObject interface
         //@{
@@ -142,6 +158,7 @@ namespace QuantLib {
         Calendar adjustCalendar_;
         Calendar jointCalendar_;
         Calendar fxFixingCalendar_;
+        bool cubicTimeInterpolation_;
     };
 
     // inline definitions
@@ -170,9 +187,16 @@ namespace QuantLib {
         return optionTenors_;
     }
 
-    inline std::vector<Times>
+    inline std::vector<Time>
     FxBlackVolatilitySurface::optionTimes() const {
         return optionTimes_;
+    }
+
+    inline ext::shared_ptr<BlackVarianceCurve>
+    FxBlackVolatilitySurface::atmVolCurve() const {
+        calculate();
+        // TODO: FIX THIS!
+        return volCurves_[2];
     }
 
     inline FxBlackVolatilitySurface::delta_vol_matrix

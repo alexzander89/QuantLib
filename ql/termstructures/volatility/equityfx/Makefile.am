@@ -22,7 +22,8 @@ this_include_HEADERS = \
     localvoltermstructure.hpp \
     noexceptlocalvolsurface.hpp \
     fxblackvolsurface.hpp \
-    svifxblackvolsurface.hpp
+    svifxblackvolsurface.hpp \
+    sabrfxblackvolsurface.hpp
 
 cpp_files = \
     andreasenhugelocalvoladapter.cpp \
@@ -38,7 +39,8 @@ cpp_files = \
     fixedlocalvoladapter.cpp \
     localvoltermstructure.cpp \
     fxblackvolsurface.cpp \
-    svifxblackvolsurface.cpp
+    svifxblackvolsurface.cpp \
+    sabrfxblackvolsurface.cpp
 
 if UNITY_BUILD
 

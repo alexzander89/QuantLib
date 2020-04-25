@@ -1,7 +1,7 @@
 /* -*- mode: c++; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 
 /*
- Copyright (C) 2019 Alex Winter
+ Copyright (C) 2020 Alex Winter
 
  This file is part of QuantLib, a free-software/open-source library
  for financial quantitative analysts and developers - http://quantlib.org/
@@ -18,21 +18,21 @@
 */
 
 /*! \file svifxblackvolsurface.hpp
-    \brief SVI FX Black volatility surface
+    \brief Noarb SABR FX Black volatility surface
 */
 
-#ifndef svi_fx_black_vol_surface_hpp
-#define svi_fx_black_vol_surface_hpp
+#ifndef sabr_fx_black_vol_surface_hpp
+#define sabr_fx_black_vol_surface_hpp
 
 #include <ql/termstructures/volatility/equityfx/fxblackvolsurface.hpp>
 
 namespace QuantLib {
 
-    //! SVI FX Black volatility surface
-    //! FX Black volatility surface using SVI interpolation in strike
-    class SviFxBlackVolatilitySurface : public FxBlackVolatilitySurface {
+    //! No-arb SABR FX Black volatility surface
+    //! FX Black volatility surface using SABR interpolation in strike
+    class SabrFxBlackVolatilitySurface : public FxBlackVolatilitySurface {
       public:
-        SviFxBlackVolatilitySurface(
+        SabrFxBlackVolatilitySurface(
                     const delta_vol_matrix& deltaVolMatrix,
                     const Handle<Quote>& fxSpot, 
                     const std::vector<Period>& optionTenors, 

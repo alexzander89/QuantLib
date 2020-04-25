@@ -20,4 +20,5 @@
 #include <ql/termstructures/volatility/equityfx/noexceptlocalvolsurface.hpp>
 #include <ql/termstructures/volatility/equityfx/fxblackvolsurface.hpp>
 #include <ql/termstructures/volatility/equityfx/svifxblackvolsurface.hpp>
+#include <ql/termstructures/volatility/equityfx/sabrfxblackvolsurface.hpp>
 

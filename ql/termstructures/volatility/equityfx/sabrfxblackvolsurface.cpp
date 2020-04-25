@@ -17,12 +17,12 @@
  FOR A PARTICULAR PURPOSE. See the license for more details.
 */
 
-#include <ql/termstructures/volatility/equityfx/svifxblackvolsurface.hpp>
-#include <ql/experimental/volatility/sviinterpolatedsmilesection.hpp>
+#include <ql/termstructures/volatility/equityfx/sabrfxblackvolsurface.hpp>
+#include <ql/experimental/volatility/noarbsabrinterpolatedsmilesection.hpp>
 
 namespace QuantLib {
 
-    SviFxBlackVolatilitySurface::SviFxBlackVolatilitySurface(
+    SabrFxBlackVolatilitySurface::SabrFxBlackVolatilitySurface(
                 const delta_vol_matrix& deltaVolMatrix,
                 const Handle<Quote>& fxSpot, 
                 const std::vector<Period>& optionTenors, 
@@ -41,7 +41,7 @@ namespace QuantLib {
         cubicTimeInterpolation) {
     }
 
-    void SviFxBlackVolatilitySurface::convertQuotes() const {
+    void SabrFxBlackVolatilitySurface::convertQuotes() const {
 
         std::vector<Volatility> vols(quotesPerSmile_);
         DeltaVolQuote::DeltaType deltaType;
@@ -62,15 +62,18 @@ namespace QuantLib {
             if (deltaType != DeltaVolQuote::Fwd 
                     && atmType != DeltaVolQuote::AtmDeltaNeutral) {
                     
-                // set up SVI smile section
+                // set up SABR smile section
                 Time optionTime = timeFromReference(optionDates()[i]);
                 std::vector<Rate> currentStrikes = 
                                     strikesFromVols(optionTime, vols, 
                                                     deltaType, atmType);                 
-                SviInterpolatedSmileSection smileSection(optionTime, 
-                                                         forwardValue(optionTime), 
-                                                         currentStrikes, false,
-                                                         Null<Volatility>(), vols);
+                NoArbSabrInterpolatedSmileSection smileSection(
+                        optionTime, 
+                        forwardValue(optionTime), 
+                        currentStrikes, false,
+                        Null<Volatility>(), vols,
+                        Null<Real>(), Null<Real>(), 
+                        Null<Real>(), Null<Real>());
 
                 // compute vols at required strike levels
                 std::vector<Rate> requiredStrikes = 
@@ -88,7 +91,7 @@ namespace QuantLib {
     }
 
     ext::shared_ptr<SmileSection> 
-    SviFxBlackVolatilitySurface::smileSectionImpl(Time t) const {
+    SabrFxBlackVolatilitySurface::smileSectionImpl(Time t) const {
         // check for existing smile section in cache--this boosts
         // performance, as setting up the interpolation can be expensive
         ext::shared_ptr<SmileSection> smile(smileCache_.fetchSmile(t));
@@ -102,19 +105,22 @@ namespace QuantLib {
         }
         // find strikes at interpolated vols
         std::vector<Rate> strikes = strikesFromVols(
-                                            t, vols, DeltaVolQuote::Fwd,
-                                            DeltaVolQuote::AtmDeltaNeutral);
-        // return interpolated SVI smile section
+                            t, vols, DeltaVolQuote::Fwd,
+                            DeltaVolQuote::AtmDeltaNeutral);
+        // return interpolated SABR smile section
         Rate fxFwd = forwardValue(t);
         ext::shared_ptr<SmileSection> p = 
             ext::shared_ptr<SmileSection>(new 
-                        SviInterpolatedSmileSection(t, fxFwd, strikes, false,
-                                                    Null<Volatility>(), vols));
+                        NoArbSabrInterpolatedSmileSection(
+                            t, fxFwd, strikes, false,
+                            Null<Volatility>(), vols,
+                            Null<Real>(), Null<Real>(),
+                            Null<Real>(), Null<Real>()));
         smileCache_.addSmile(t, p);
         return p;
     }
 
-    void SviFxBlackVolatilitySurface::update() {
+    void SabrFxBlackVolatilitySurface::update() {
         smileCache_.clear();
         FxBlackVolatilitySurface::update();
     }

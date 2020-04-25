@@ -20,9 +20,31 @@
 #include <ql/time/calendars/jointcalendar.hpp>
 #include <ql/termstructures/volatility/equityfx/fxblackvolsurface.hpp>
 #include <ql/experimental/fx/blackdeltacalculator.hpp>
+#include <ql/math/interpolations/cubicinterpolation.hpp>
 #include <ql/utilities/dataformatters.hpp>
 
 namespace QuantLib {
+
+    SmileCache::SmileCache(Size maxSize)
+        : maxSize_(maxSize) {}
+
+    ext::shared_ptr<SmileSection> SmileCache::fetchSmile(Time t) const {
+        smile_cache::const_iterator i = cache_.find(t);
+        if (i != cache_.end())
+            return i->second;
+        else
+            return ext::shared_ptr<SmileSection>();
+    }
+
+    void SmileCache::addSmile(Time t, const ext::shared_ptr<SmileSection>& smile) {
+        if (cache_.size() > maxSize_)
+            cache_.clear();
+        cache_.insert(std::make_pair(t, smile));
+    }
+
+    void SmileCache::clear() {
+        cache_.clear();
+    }
 
     FxBlackVolatilitySurface::FxBlackVolatilitySurface(
                 const delta_vol_matrix& deltaVolMatrix,
@@ -35,7 +57,8 @@ namespace QuantLib {
                 const Calendar& adjustCalendar,
                 const Calendar& fxFixingCalendar,
                 BusinessDayConvention bdc,
-                const DayCounter& dc)
+                const DayCounter& dc,
+                bool cubicTimeInterpolation)
         : BlackVolatilityTermStructure(0, NullCalendar(), bdc, dc), 
         quotesPerSmile_(deltaVolMatrix.front().size()), 
         deltaVolMatrix_(deltaVolMatrix), fxSpot_(fxSpot),
@@ -44,7 +67,8 @@ namespace QuantLib {
         optionTimes_(optionTenors.size()), deltas_(quotesPerSmile_), 
         domesticTS_(domesticTermStructure), foreignTS_(foreignTermStructure), 
         fxSpotDays_(fxSpotDays), advanceCalendar_(advanceCalendar), 
-        adjustCalendar_(adjustCalendar), fxFixingCalendar_(fxFixingCalendar) {
+        adjustCalendar_(adjustCalendar), fxFixingCalendar_(fxFixingCalendar),
+        cubicTimeInterpolation_(cubicTimeInterpolation) {
         
         initializeDates();
         checkInputs();
@@ -79,11 +103,16 @@ namespace QuantLib {
     }
 
     Rate FxBlackVolatilitySurface::forwardValue(Time t) const {
-        // This is an approximation: the forward value should 
-        // technically be computed by discounting from the delivery
-        // date corresponding to time t back to the fx spot date. 
-        // Determining this delivery date is problematic though, 
-        // since we cannot easily map from time to dates. 
+        /*This is an approximation: the forward value should 
+         technically be computed by discounting from the delivery
+         date corresponding to time t back to the fx spot date. 
+         Determining this delivery date is problematic though, 
+         since we cannot easily map from time to dates. There may
+         also be a small inconsistency if there are day-count mis-matches 
+         between the different curves and vol term structure; this seems 
+         to be unavoidable at present unfortuantely because smileSectionImpl 
+         takes an option time, rather than a date. 
+        */
         DiscountFactor dfDom = domesticTS_->discount(t);
         DiscountFactor dfFor = foreignTS_->discount(t);
         Real fwd = fxSpot_->value()*dfFor/dfDom;
@@ -210,6 +239,10 @@ namespace QuantLib {
                                                      optionDates(),
                                                      vols,
                                                      dayCounter()));
+            if (cubicTimeInterpolation_) {
+                Cubic cubicInterp_(CubicInterpolation::Spline, true);
+                volCurves_[j]->setInterpolation<Cubic>(cubicInterp_);
+            }
             volCurves_[j]->enableExtrapolation();
         }
     }
