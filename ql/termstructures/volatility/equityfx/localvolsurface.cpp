@@ -21,6 +21,7 @@
 #include <ql/termstructures/volatility/equityfx/blackvoltermstructure.hpp>
 #include <ql/termstructures/yieldtermstructure.hpp>
 #include <ql/quotes/simplequote.hpp>
+//#include <stdexcept>
 
 namespace QuantLib {
 
@@ -92,7 +93,6 @@ namespace QuantLib {
 
     Volatility LocalVolSurface::localVolImpl(Time t, Real underlyingLevel)
                                                                      const {
-
         DiscountFactor dr = riskFreeTS_->discount(t, true);
         DiscountFactor dq = dividendTS_->discount(t, true);
         Real forwardValue = underlying_->value()*dq/dr;
@@ -120,6 +120,12 @@ namespace QuantLib {
             Real strikept = strike*dr*dqpt/(drpt*dq);
         
             wpt = blackTS_->blackVariance(t+dt, strikept, true);
+            //if (!(wpt>=w)) {
+            //    std::stringstream _ql_msg_stream; 
+            //    _ql_msg_stream << "decreasing variance at strike " << strike
+            //                   << " between time " << t << " and time " << t+dt;
+            //    throw std::runtime_error(_ql_msg_stream.str());
+            //}
             QL_ENSURE(wpt>=w,
                       "decreasing variance at strike " << strike
                       << " between time " << t << " and time " << t+dt);

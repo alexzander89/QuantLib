@@ -2,7 +2,7 @@
 
 /*
  Copyright (C) 2007 Cristina Duminuco
- Copyright (C) 2006 François du Vignaud
+ Copyright (C) 2006 Franï¿½ois du Vignaud
  Copyright (C) 2015 Peter Caspers
 
  This file is part of QuantLib, a free-software/open-source library
@@ -73,6 +73,71 @@ namespace QuantLib {
                const DayCounter& dc,
                const Real shift)
     : SmileSection(optionDate, dc, Date(), ShiftedLognormal, shift),
+           forward_(Handle<Quote>(ext::shared_ptr<Quote>(new SimpleQuote(forward)))),
+           atmVolatility_(Handle<Quote>(ext::shared_ptr<Quote>(new SimpleQuote(atmVolatility)))),
+           volHandles_(volHandles.size()), strikes_(strikes), actualStrikes_(strikes),
+           hasFloatingStrikes_(hasFloatingStrikes), vols_(volHandles.size()),
+           alpha_(alpha), beta_(beta), nu_(nu), rho_(rho),
+           isAlphaFixed_(isAlphaFixed), isBetaFixed_(isBetaFixed),
+           isNuFixed_(isNuFixed), isRhoFixed_(isRhoFixed),
+           vegaWeighted_(vegaWeighted),
+           endCriteria_(endCriteria), method_(method),
+           evaluationDate_(Settings::instance().evaluationDate()) {
+
+            for (Size i=0; i<volHandles_.size(); ++i)
+                volHandles_[i] = Handle<Quote>(ext::shared_ptr<Quote>(new
+                                        SimpleQuote(volHandles[i])));
+
+    }
+
+    SabrInterpolatedSmileSection::SabrInterpolatedSmileSection(
+                Time optionTime,
+                const Handle<Quote>& forward,
+                const std::vector<Rate>& strikes,
+                bool hasFloatingStrikes,
+                const Handle<Quote>& atmVolatility,
+                const std::vector<Handle<Quote> >& volHandles,
+                Real alpha, Real beta, Real nu, Real rho,
+                bool isAlphaFixed, bool isBetaFixed,
+                bool isNuFixed, bool isRhoFixed,
+                bool vegaWeighted,
+                const ext::shared_ptr<EndCriteria>& endCriteria,
+                const ext::shared_ptr<OptimizationMethod>& method,
+                const DayCounter& dc,
+                const Real shift)
+           : SmileSection(optionTime, dc, ShiftedLognormal, shift),
+           forward_(forward), atmVolatility_(atmVolatility),
+           volHandles_(volHandles), strikes_(strikes), actualStrikes_(strikes),
+           hasFloatingStrikes_(hasFloatingStrikes), vols_(volHandles.size()),
+           alpha_(alpha), beta_(beta), nu_(nu), rho_(rho),
+           isAlphaFixed_(isAlphaFixed), isBetaFixed_(isBetaFixed),
+           isNuFixed_(isNuFixed), isRhoFixed_(isRhoFixed),
+           vegaWeighted_(vegaWeighted),
+           endCriteria_(endCriteria), method_(method),
+           evaluationDate_(Settings::instance().evaluationDate()) {
+
+            LazyObject::registerWith(forward_);
+            LazyObject::registerWith(atmVolatility_);
+            for (Size i=0; i<volHandles_.size(); ++i)
+                LazyObject::registerWith(volHandles_[i]);
+    }
+
+    SabrInterpolatedSmileSection::SabrInterpolatedSmileSection(
+               Time optionTime,
+               const Rate& forward,
+               const std::vector<Rate>& strikes,
+               bool hasFloatingStrikes,
+               const Volatility& atmVolatility,
+               const std::vector<Volatility>& volHandles,
+               Real alpha, Real beta, Real nu, Real rho,
+               bool isAlphaFixed, bool isBetaFixed,
+               bool isNuFixed, bool isRhoFixed,
+               bool vegaWeighted,
+               const ext::shared_ptr<EndCriteria>& endCriteria,
+               const ext::shared_ptr<OptimizationMethod>& method,
+               const DayCounter& dc,
+               const Real shift)
+    : SmileSection(optionTime, dc, ShiftedLognormal, shift),
            forward_(Handle<Quote>(ext::shared_ptr<Quote>(new SimpleQuote(forward)))),
            atmVolatility_(Handle<Quote>(ext::shared_ptr<Quote>(new SimpleQuote(atmVolatility)))),
            volHandles_(volHandles.size()), strikes_(strikes), actualStrikes_(strikes),

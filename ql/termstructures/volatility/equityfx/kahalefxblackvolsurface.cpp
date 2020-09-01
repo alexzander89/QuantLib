@@ -17,13 +17,15 @@
  FOR A PARTICULAR PURPOSE. See the license for more details.
 */
 
-#include <ql/termstructures/volatility/equityfx/sabrfxblackvolsurface.hpp>
-#include <ql/termstructures/volatility/sabrinterpolatedsmilesection.hpp>
-#include <ql/experimental/volatility/zabrinterpolatedsmilesection.hpp>
+#include <ql/termstructures/volatility/equityfx/kahalefxblackvolsurface.hpp>
+#include <ql/termstructures/volatility/kahalesmilesection.hpp>
+
+#include <ql/termstructures/volatility/interpolatedsmilesection.hpp>
+#include <ql/experimental/volatility/sviinterpolatedsmilesection.hpp>
 
 namespace QuantLib {
 
-    SabrFxBlackVolatilitySurface::SabrFxBlackVolatilitySurface(
+    KahaleFxBlackVolatilitySurface::KahaleFxBlackVolatilitySurface(
                 const delta_vol_matrix& deltaVolMatrix,
                 const Handle<Quote>& fxSpot, 
                 const std::vector<Period>& optionTenors, 
@@ -36,14 +38,18 @@ namespace QuantLib {
                 BusinessDayConvention bdc,
                 const DayCounter& dc,
                 bool cubicTimeInterpolation,
-                Real gamma)
+                bool interpolate, 
+                bool exponentialExtrapolation,
+                bool deleteArbitragePoints)
         : FxBlackVolatilitySurface(deltaVolMatrix, fxSpot, optionTenors, 
         domesticTermStructure, foreignTermStructure, fxFixingDays,
         advanceCalendar, adjustCalendar, fxFixingCalendar, bdc, dc,
-        cubicTimeInterpolation), gamma_(gamma) {
+        cubicTimeInterpolation), interpolate_(interpolate),
+        exponentialExtrapolation_(exponentialExtrapolation),
+        deleteArbitragePoints_(deleteArbitragePoints) {
     }
 
-    void SabrFxBlackVolatilitySurface::convertQuotes() const {
+    void KahaleFxBlackVolatilitySurface::convertQuotes() const {
 
         std::vector<Volatility> vols(quotesPerSmile_);
         DeltaVolQuote::DeltaType deltaType;
@@ -64,23 +70,29 @@ namespace QuantLib {
             if (deltaType != DeltaVolQuote::Fwd 
                     && atmType != DeltaVolQuote::AtmDeltaNeutral) {
                     
-                // set up SABR smile section
+                // set up smile section
                 Time optionTime = timeFromReference(optionDates()[i]);
                 std::vector<Rate> currentStrikes = 
                                     strikesFromVols(optionTime, vols, 
                                                     deltaType, atmType);   
            
                 Real fxFwd = forwardValue(optionTime);
-                Real beta = 0.5;
-                Real alpha = vols[2] * std::pow(fxFwd, 0.5);
-                ext::shared_ptr<SmileSection> p(new 
-                        ZabrInterpolatedSmileSection
-                                <ZabrShortMaturityNormal>(
-                            optionTime, fxFwd, 
-                            currentStrikes, false,
-                            Null<Volatility>(), vols,
-                            alpha, beta, Null<Real>(), Null<Real>(),
-                            gamma_, false, false, false, false, true));
+                std::vector<Real> money;
+                //std::vector<Real> stdDevs;
+                for (Size i = 0; i < currentStrikes.size(); i++) {
+                    money.push_back(currentStrikes[i] / fxFwd);
+                    //stdDevs.push_back(vols[i]*std::sqrt(optionTime));
+                }
+                ext::shared_ptr<SmileSection> sec1(
+                    new SviInterpolatedSmileSection(
+                                            optionTime, fxFwd, currentStrikes, false,
+                                            Null<Volatility>(), vols));
+                    //new InterpolatedSmileSection<Linear>(
+                    //    optionTime, currentStrikes, stdDevs, fxFwd));
+                ext::shared_ptr<KahaleSmileSection> p(
+                    new KahaleSmileSection(
+                        sec1, fxFwd, interpolate_, exponentialExtrapolation_, 
+                        deleteArbitragePoints_, money));
                
                 // compute vols at required strike levels
                 std::vector<Rate> requiredStrikes = 
@@ -98,7 +110,7 @@ namespace QuantLib {
     }
 
     ext::shared_ptr<SmileSection> 
-    SabrFxBlackVolatilitySurface::smileSectionImpl(Time t) const {
+    KahaleFxBlackVolatilitySurface::smileSectionImpl(Time t) const {
         // check for existing smile section in cache--this boosts
         // performance, as setting up the interpolation can be expensive
         ext::shared_ptr<SmileSection> smile(smileCache_.fetchSmile(t));
@@ -117,20 +129,28 @@ namespace QuantLib {
         // return interpolated SABR smile section
         Rate fxFwd = forwardValue(t);
 
-        Real beta = 0.5;
-        Real alpha = vols[2] * std::pow(fxFwd, 0.5);
-        ext::shared_ptr<SmileSection> p(new 
-            ZabrInterpolatedSmileSection
-                    <ZabrShortMaturityLognormal>(
-                t, fxFwd, strikes, false,
-                Null<Volatility>(), vols,
-                alpha, beta, Null<Real>(), Null<Real>(),
-                gamma_, false, false, false, false, true));
+        // set up smile section
+        std::vector<Real> money;
+        //std::vector<Real> stdDevs;
+        for (Size i = 0; i < strikes.size(); i++) {
+            money.push_back(strikes[i] / fxFwd);
+            //stdDevs.push_back(vols[i]*std::sqrt(t));
+        }
+        ext::shared_ptr<SmileSection> sec1(
+            //new InterpolatedSmileSection<Linear>(
+            //    t, strikes, stdDevs, fxFwd));
+            new SviInterpolatedSmileSection(t, fxFwd, strikes, false,
+                                            Null<Volatility>(), vols));
+            
+        ext::shared_ptr<KahaleSmileSection> p(
+            new KahaleSmileSection(
+                sec1, fxFwd, interpolate_, exponentialExtrapolation_, 
+                deleteArbitragePoints_, money));
         smileCache_.addSmile(t, p);
         return p;
     }
 
-    void SabrFxBlackVolatilitySurface::update() {
+    void KahaleFxBlackVolatilitySurface::update() {
         smileCache_.clear();
         FxBlackVolatilitySurface::update();
     }

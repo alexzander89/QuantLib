@@ -17,22 +17,22 @@
  FOR A PARTICULAR PURPOSE.  See the license for more details.
 */
 
-/*! \file sabrefxblackvolsurface.hpp
+/*! \file khalefxblackvolsurface.hpp
     \brief Noarb SABR FX Black volatility surface
 */
 
-#ifndef sabr_fx_black_vol_surface_hpp
-#define sabr_fx_black_vol_surface_hpp
+#ifndef kahale_fx_black_vol_surface_hpp
+#define kahale_fx_black_vol_surface_hpp
 
 #include <ql/termstructures/volatility/equityfx/fxblackvolsurface.hpp>
 
 namespace QuantLib {
 
-    //! No-arb SABR FX Black volatility surface
-    //! FX Black volatility surface using SABR interpolation in strike
-    class SabrFxBlackVolatilitySurface : public FxBlackVolatilitySurface {
+    //! Kahale FX Black volatility surface
+    //! FX Black volatility surface using Kahale interpolation in strike
+    class KahaleFxBlackVolatilitySurface : public FxBlackVolatilitySurface {
       public:
-        SabrFxBlackVolatilitySurface(
+        KahaleFxBlackVolatilitySurface(
                     const delta_vol_matrix& deltaVolMatrix,
                     const Handle<Quote>& fxSpot, 
                     const std::vector<Period>& optionTenors, 
@@ -45,7 +45,9 @@ namespace QuantLib {
                     BusinessDayConvention bdc = Following,
                     const DayCounter& dc = Actual365Fixed(),
                     bool cubicTimeInterpolation = false,
-                    Real gamma = 1.0);
+                    bool interpolate = false, 
+                    bool exponentialExtrapolation = false,
+                    bool deleteArbitragePoints = false);
         //! \name LazyObject interface
         //@{
         virtual void update();
@@ -62,8 +64,11 @@ namespace QuantLib {
         virtual void convertQuotes() const;
         //@}
         mutable SmileCache smileCache_;
-        Real gamma_;
+        bool interpolate_; 
+        bool exponentialExtrapolation_;
+        bool deleteArbitragePoints_;
     };
 
 } // namespace QuantLib
+
 #endif

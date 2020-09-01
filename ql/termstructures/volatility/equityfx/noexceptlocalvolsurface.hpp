@@ -26,6 +26,7 @@
 #define quantlib_no_except_localvolsurface_hpp
 
 #include <ql/termstructures/volatility/equityfx/localvolsurface.hpp>
+#include <iostream>
 
 namespace QuantLib {
 
@@ -48,16 +49,22 @@ namespace QuantLib {
           illegalLocalVolOverwrite_(illegalLocalVolOverwrite) { }
 
       protected:
-        Volatility localVolImpl(Time t, Real s) const {
-            Volatility vol;
-            try {
-                vol = LocalVolSurface::localVolImpl(t, s);
-            } catch (Error&) {
-                vol = illegalLocalVolOverwrite_;
-            }
-
-            return vol;
-        }
+        virtual Volatility localVolImpl(Time t, Real s) const;
+        // The following implementation was casusing the SWIG wrappers to crash
+        // upon exiting the catch block. I couldn't figure out what the issue was
+        // so have implemented the illegal local vol overwrite explicitly in the 
+        // function.
+        //{
+        //    Volatility vol;
+        //    try {
+        //        vol = LocalVolSurface::localVolImpl(t, s);
+        //    } catch (Error&) {
+        //        std::cout << "Warning:: Applying illegal local vol overwrite" 
+        //                  << " for time " << t << " and strike " << s << std::endl;
+        //        vol = illegalLocalVolOverwrite_;
+        //    }
+        //    return vol;
+        //}
 
       private:
         const Real illegalLocalVolOverwrite_;

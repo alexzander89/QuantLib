@@ -24,7 +24,9 @@
 namespace QuantLib {
 
     FixedLocalVolSurfaceAdapter::FixedLocalVolSurfaceAdapter(
-        const ext::shared_ptr<LocalVolSurface>& localVol,
+        const Handle<LocalVolSurface>& localVol,
+        Real xMax,
+        Real xMin,
         Size tGrid, 
         Size xGrid) 
     : LocalVolTermStructure(localVol->businessDayConvention(),
@@ -37,35 +39,45 @@ namespace QuantLib {
                         localVol->underlying().currentLink(),
                         localVol->riskFreeYield().currentLink(),
                         localVol->dividendYield().currentLink(),
-                        localVol, tGrid, xGrid));
+                        localVol.currentLink(), tGrid, xGrid));
         
         ext::shared_ptr<TimeGrid> timeGrid = localVolRND->timeGrid();
         std::vector<Time> expiries(timeGrid->begin()+1, timeGrid->end());
 
         // generate strike matrix
-        std::vector<ext::shared_ptr<std::vector<Real> > > strikes;
-        for (Size i=1; i < timeGrid->size(); ++i) {
-            Time t = timeGrid->at(i);
-            ext::shared_ptr<Fdm1dMesher> fdm1dMesher = localVolRND->mesher(t);
-            const std::vector<Real>& logStrikes = fdm1dMesher->locations();
-            ext::shared_ptr<std::vector<Real> > strikeSlice(
-                ext::make_shared<std::vector<Real> >(logStrikes.size()));
-            for (Size j=0; j < logStrikes.size(); ++j) {
-                (*strikeSlice)[j] = std::exp(logStrikes[j]);
-            }
-            strikes.push_back(strikeSlice);
+        //std::vector<ext::shared_ptr<std::vector<Real> > > strikes;
+        //for (Size i=1; i < timeGrid->size(); ++i) {
+        //    Time t = timeGrid->at(i);
+        //    ext::shared_ptr<Fdm1dMesher> fdm1dMesher = localVolRND->mesher(t);
+        //    const std::vector<Real>& logStrikes = fdm1dMesher->locations();
+        //    ext::shared_ptr<std::vector<Real> > strikeSlice(
+        //        ext::make_shared<std::vector<Real> >(logStrikes.size()));
+        //    for (Size j=0; j < logStrikes.size(); ++j) {
+        //        (*strikeSlice)[j] = std::exp(logStrikes[j]);
+        //    }
+        //    strikes.push_back(strikeSlice);
+        //}
+
+        Real h = (xMax - xMin) / static_cast<Real>(xGrid-1);
+        std::vector<Real> strikes(xGrid);
+        std::vector<Real>::iterator k;
+        Real val;
+        for (k = strikes.begin(), val = xMin; k != strikes.end(); ++k, val += h) {
+            *k = val;
         }
 
         // generate matrix of fixed local vol points
-        Size nStrikes = strikes.front()->size();
+        //Size nStrikes = strikes.front()->size();
+        //ext::shared_ptr<Matrix> localVolMatrix(
+        //    ext::make_shared<Matrix>(nStrikes, timeGrid->size()-1));
         ext::shared_ptr<Matrix> localVolMatrix(
-            ext::make_shared<Matrix>(nStrikes, timeGrid->size()-1));
+            ext::make_shared<Matrix>(xGrid, timeGrid->size()-1));
         for (Size i=1; i < timeGrid->size(); ++i) {
             Time t = timeGrid->at(i);
-            ext::shared_ptr<std::vector<Real> > strikeSlice = strikes[i-1];
-
-            for (Size j=0; j < nStrikes; ++j) {
-                Real s = (*strikeSlice)[j];
+            //ext::shared_ptr<std::vector<Real> > strikeSlice = strikes[i-1];
+            for (Size j=0; j < xGrid; ++j) {
+                //Real s = (*strikeSlice)[j];
+                Real s = strikes[j];
                 (*localVolMatrix)[j][i-1] = localVol->localVol(t, s, true);
             }
         }

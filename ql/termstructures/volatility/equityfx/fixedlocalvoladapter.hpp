@@ -31,12 +31,16 @@ namespace QuantLib {
 
     class FixedLocalVolSurfaceAdapter : public LocalVolTermStructure {
       public:
-        FixedLocalVolSurfaceAdapter(
-            const ext::shared_ptr<LocalVolSurface>& localVol,
+        explicit FixedLocalVolSurfaceAdapter(
+            const Handle<LocalVolSurface>& localVol,
+            Real xMax,
+            Real xMin = 1E-3,
             Size tGrid = 100, 
             Size xGrid = 100);
         //! \name TermStructure interface
         //@{
+        const Date& referenceDate() const;
+        DayCounter dayCounter() const;
         Time maxTime() const;
         Date maxDate() const;
         //@}
@@ -51,9 +55,18 @@ namespace QuantLib {
         ext::shared_ptr<FixedLocalVolSurface> fixedLocalVol_;
     };
 
+    inline const Date& 
+    FixedLocalVolSurfaceAdapter::referenceDate() const {
+        return fixedLocalVol_->referenceDate();
+    }
+    inline DayCounter 
+    FixedLocalVolSurfaceAdapter::dayCounter() const {
+        return fixedLocalVol_->dayCounter();
+    }
     inline Time
     FixedLocalVolSurfaceAdapter::maxTime() const {
         return fixedLocalVol_->maxTime();
+        
     }
     inline Date 
     FixedLocalVolSurfaceAdapter::maxDate() const {

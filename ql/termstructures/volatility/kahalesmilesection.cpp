@@ -88,14 +88,18 @@ namespace QuantLib {
                 if (interpolate_)
                     c1p = (secl + sec) / 2;
                 else {
-                    c1p = -source_->digitalOptionPrice(
-                        k1 - shift() + gap_ / 2.0, Option::Call, 1.0, gap_);
+                    // use put-call parity
+                    c1p = -1.0 + source_->digitalOptionPrice(
+                        k1 - shift() + gap_ / 2.0, Option::Put, 1.0, gap_);
                     QL_REQUIRE(secl < c1p && c1p <= 0.0, "dummy");
                     // can not extrapolate so throw exception which is caught
                     // below
                 }
                 sHelper1 sh1(k1, c0, c1, c1p);
-                Real s = brent.solve(sh1, QL_KAHALE_ACC, 0.20, 0.00,
+                Real s = brent.solve(sh1, 
+                                     QL_KAHALE_ACC, 
+                                     0.20, 
+                                     0.00,
                                      QL_KAHALE_SMAX); // numerical parameters
                                                       // hardcoded here
                 sh1(s);
@@ -106,7 +110,7 @@ namespace QuantLib {
                 // which are not monotonic or greater than 1.0
                 // due to numerical effects. Move to the next index in
                 // these cases.
-                Real dig = digitalOptionPrice((k1 - shift()) / 2.0, Option::Call,
+                Real dig = 1 - digitalOptionPrice((k1 - shift()) / 2.0, Option::Put,
                                               1.0, gap_);
                 QL_REQUIRE(dig >= -c1p && dig <= 1.0, "dummy");
                 if(static_cast<int>(leftIndex_) < forcedLeftIndex_) {
@@ -246,6 +250,7 @@ namespace QuantLib {
         int i = index(shifted_strike);
         if (!interpolate_ &&
             !(i == 0 || i == (int)(rightIndex_ - leftIndex_ + 1)))
+            //!(i == (int)(rightIndex_ - leftIndex_ + 1)))
             return source_->volatility(strike);
         Real c = (*cFunctions_[i])(shifted_strike);
         Real vol = 0.0;

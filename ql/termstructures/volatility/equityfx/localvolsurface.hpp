@@ -71,10 +71,11 @@ namespace QuantLib {
         const Handle<Quote>& underlying() const;
         const Handle<YieldTermStructure>& dividendYield() const;
         const Handle<YieldTermStructure>& riskFreeYield() const;
+        const Handle<BlackVolTermStructure>& volSurface() const;
         //! compute forward value for a particular time
         Rate forwardValue(Time t) const;
       protected:
-        Volatility localVolImpl(Time, Real) const;
+        virtual Volatility localVolImpl(Time, Real) const;
       private:
         Handle<BlackVolTermStructure> blackTS_;
         Handle<YieldTermStructure> riskFreeTS_, dividendTS_;
@@ -95,6 +96,11 @@ namespace QuantLib {
     inline const Handle<YieldTermStructure>& 
     LocalVolSurface::riskFreeYield() const {
         return riskFreeTS_;
+    }
+
+    inline const Handle<BlackVolTermStructure>& 
+    LocalVolSurface::volSurface() const {
+        return blackTS_;
     }
 
 } // namespace QuantLib
